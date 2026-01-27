@@ -37,6 +37,9 @@ jobs:
       fail-fast: false
 
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+
       - name: Build LLVM package - Windows ARM64 platform
         shell: cmd
         env:
