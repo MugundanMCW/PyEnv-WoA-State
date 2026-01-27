@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       platform:
-        description: Conda Platform
+        description: LLVM DEV for Windows ARM64
         default: all
         required: true
         type: choice
@@ -22,8 +22,6 @@ on:
         required: true
         type: choice
         options:
-          - all
-          - llvmdev
           - llvmdev_for_wheel
 
 env:
@@ -31,7 +29,7 @@ env:
 
 jobs:
   build:
-    name: ${{ matrix.recipe }}-${{ matrix.platform }}
+    name:  llvmdev_for_wheel-win-arm64
     runs-on: windows-11-arm
     defaults:
       run:
@@ -41,7 +39,6 @@ jobs:
 
     steps:
       - name: Build LLVM package - Windows ARM64 platform
-        if: matrix.platform == 'win-arm64' 
         shell: cmd
         env:
           ARTIFACT_DIR: llvm_arm64_artifact
@@ -54,7 +51,7 @@ jobs:
       - name: Upload Windows ARM64 LLVM artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: ${{ matrix.recipe }}_${{ matrix.platform }}
+          name: llvmdev_for_wheel-win-arm64
           path: llvm_arm64_artifact
           compression-level: 0
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
