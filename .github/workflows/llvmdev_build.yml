@@ -39,16 +39,13 @@ jobs:
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v5
-        with:
-          ref: llvmlite
-          fetch-depth: 0
 
       - name: Build LLVM package - Windows ARM64 platform
         shell: cmd
         env:
           ARTIFACT_DIR: llvm_arm64_artifact
         run: |
-          call "%GITHUB_WORKSPACE%\.github\workflows\bld_llvm_winarm64.bat"
+          call "%GITHUB_WORKSPACE%\.github\workflows\buildscripts\bld_llvm_winarm64.bat"
           if %ERRORLEVEL% neq 0 exit /B %ERRORLEVEL%
           mkdir "%ARTIFACT_DIR%"
           xcopy /E /I /Y llvm-arm64-install "%ARTIFACT_DIR%\llvm-arm64-install"
