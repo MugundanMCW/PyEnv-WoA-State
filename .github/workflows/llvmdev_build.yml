@@ -43,7 +43,7 @@ jobs:
         env:
           ARTIFACT_DIR: llvm_arm64_artifact
         run: |
-          call buildscripts\windows_arm64\bld_llvm_winarm64.bat
+          call .github\bld_llvm_winarm64.bat
           if %ERRORLEVEL% neq 0 exit /B %ERRORLEVEL%
           mkdir "%ARTIFACT_DIR%"
           xcopy /E /I /Y llvm-arm64-install "%ARTIFACT_DIR%\llvm-arm64-install"
