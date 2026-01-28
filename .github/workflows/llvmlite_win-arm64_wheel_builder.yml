@@ -39,7 +39,7 @@ jobs:
 
       - name: Apply Windows ARM64 patch
         run: |
-          copy patches\0001-Support-LLVMlite-on-Windows-ARM64.patch llvmlite_src\
+          copy "%GITHUB_WORKSPACE%\patches\0001-Support-LLVMlite-on-Windows-ARM64.patch" "%GITHUB_WORKSPACE%\llvmlite_src\"
           cd llvmlite_src
           git apply 0001-Support-LLVMlite-on-Windows-ARM64.patch
 
