@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: 'The run ID of the llvmlite_win-arm64_wheel_builder workflow'
+        description: 'Run ID of llvmlite_win-arm64_wheel_builder workflow'
         required: true
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Download artifacts
+      - name: Download wheel artifacts
         uses: dawidd6/action-download-artifact@v11
         with:
           workflow: llvmlite_win-arm64_wheel_builder.yml
@@ -26,64 +26,43 @@ jobs:
           path: artifacts
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: List downloaded artifacts
+      - name: List wheels
         run: |
-          echo "Downloaded artifacts:"
           find artifacts -type f -name "*.whl" | sort
 
-      - name: Extract version information and create releases
+      - name: Create single GitHub release (gRPC style)
         run: |
           set -euo pipefail
 
-          for WHEEL_DIR in artifacts/llvmlite-win-arm64-py*; do
-            if [ ! -d "$WHEEL_DIR" ]; then
-              echo "No matching directories found"
-              continue
-            fi
+          WHEELS=$(find artifacts -type f -name "*.whl" | sort)
+          if [ -z "$WHEELS" ]; then
+            echo "No wheels found"
+            exit 1
+          fi
+          FIRST_WHEEL=$(echo "$WHEELS" | head -n 1)
+          BASENAME=$(basename "$FIRST_WHEEL")
+          VERSION=$(echo "$BASENAME" | sed -E 's/llvmlite-([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          PLATFORM="win_arm64"
 
-            DIR_NAME=$(basename "$WHEEL_DIR")
-            echo "Processing directory: $DIR_NAME"
+          TAG="llvmlite-${VERSION}-${PLATFORM}"
+          TITLE="llvmlite ${VERSION} for Windows ARM64"
 
-            PY_VERSION=$(echo "$DIR_NAME" | sed -E 's/.*-py([0-9]+\.[0-9]+)/\1/')
-            PLATFORM="win_arm64"
+          echo "Creating release:"
+          echo "  Tag:   $TAG"
+          echo "  Title: $TITLE"
 
-            WHEEL_FILE=$(find "$WHEEL_DIR" -name "*.whl" | head -n 1)
-            if [ -z "$WHEEL_FILE" ]; then
-              echo "No wheel file found in $WHEEL_DIR"
-              continue
-            fi
-
-            WHEEL_BASENAME=$(basename "$WHEEL_FILE")
-
-            PKG_VERSION=$(echo "$WHEEL_BASENAME" | sed -E 's/llvmlite-([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-            PY_TAG=$(echo "$WHEEL_BASENAME" | sed -E 's/.*-(cp[0-9]+)-.*/\1/')
-
-            if [ -z "$PKG_VERSION" ] || [ -z "$PY_TAG" ]; then
-              echo "Failed to parse metadata from $WHEEL_BASENAME"
-              continue
-            fi
-
-            RELEASE_TAG="llvmlite-${PKG_VERSION}-${PY_TAG}-${PLATFORM}"
-            RELEASE_NAME="llvmlite ${PKG_VERSION} (${PY_TAG}, Windows ARM64)"
-
-            echo "Creating release:"
-            echo "  Tag:  $RELEASE_TAG"
-            echo "  Name: $RELEASE_NAME"
-
-            gh release create "$RELEASE_TAG" \
-              --title "$RELEASE_NAME" \
-              --notes "llvmlite Windows ARM64 wheel built from workflow run ${{ github.event.inputs.run_id }}" \
-              --prerelease \
-              "$WHEEL_FILE" || echo "Release $RELEASE_TAG already exists, skipping"
-          done
+          gh release create "$TAG" \
+            --title "$TITLE" \
+            --notes "llvmlite Windows ARM64 wheels built from workflow run ${{ github.event.inputs.run_id }}" \
+            --prerelease \
+            $WHEELS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
         run: |
-          echo "## llvmlite Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## llvmlite Release Created" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Build workflow run ID: **${{ github.event.inputs.run_id }}**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Released wheels:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run ID:** ${{ github.event.inputs.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release:** one tag per version + platform (gRPC style)" >> $GITHUB_STEP_SUMMARY
           find artifacts -type f -name "*.whl" | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
