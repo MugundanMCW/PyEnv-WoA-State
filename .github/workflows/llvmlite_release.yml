@@ -6,9 +6,6 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
-      commit_sha:
-        description: 'Commit SHA or version identifier used in the build artifacts'
-        required: true
       run_id:
         description: 'The run ID of the llvmlite_win-arm64_wheel_builder workflow'
         required: true
@@ -31,46 +28,43 @@ jobs:
 
       - name: List downloaded artifacts
         run: |
-          echo "Downloaded wheel files:"
+          echo "Downloaded artifacts:"
           find artifacts -type f -name "*.whl" | sort
 
       - name: Extract version information and create releases
         run: |
           set -euo pipefail
 
-          for WHEEL_DIR in artifacts/llvmlite-${{ github.event.inputs.commit_sha }}-*; do
+          for WHEEL_DIR in artifacts/llvmlite-win-arm64-py*; do
             if [ ! -d "$WHEEL_DIR" ]; then
-              echo "No matching directories found for commit_sha=${{ github.event.inputs.commit_sha }}"
+              echo "No matching directories found"
               continue
             fi
 
             DIR_NAME=$(basename "$WHEEL_DIR")
             echo "Processing directory: $DIR_NAME"
 
-            # Expected directory format:
-            # llvmlite-COMMIT_SHA-PLATFORM-PY_VERSION
-            IFS='-' read -ra PARTS <<< "$DIR_NAME"
-
-            PLATFORM="${PARTS[2]}"
-            PY_VERSION="${PARTS[3]}"
+            PY_VERSION=$(echo "$DIR_NAME" | sed -E 's/.*-py([0-9]+\.[0-9]+)/\1/')
+            PLATFORM="win_arm64"
 
             WHEEL_FILE=$(find "$WHEEL_DIR" -name "*.whl" | head -n 1)
             if [ -z "$WHEEL_FILE" ]; then
-              echo "No wheel found in $WHEEL_DIR"
+              echo "No wheel file found in $WHEEL_DIR"
               continue
             fi
 
             WHEEL_BASENAME=$(basename "$WHEEL_FILE")
 
             PKG_VERSION=$(echo "$WHEEL_BASENAME" | sed -E 's/llvmlite-([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+            PY_TAG=$(echo "$WHEEL_BASENAME" | sed -E 's/.*-(cp[0-9]+)-.*/\1/')
 
-            if [ -z "$PKG_VERSION" ]; then
-              echo "Failed to extract version from $WHEEL_BASENAME"
+            if [ -z "$PKG_VERSION" ] || [ -z "$PY_TAG" ]; then
+              echo "Failed to parse metadata from $WHEEL_BASENAME"
               continue
             fi
 
-            RELEASE_TAG="llvmlite-${PKG_VERSION}-py${PY_VERSION}-${PLATFORM}"
-            RELEASE_NAME="llvmlite ${PKG_VERSION} for Python ${PY_VERSION} (${PLATFORM})"
+            RELEASE_TAG="llvmlite-${PKG_VERSION}-${PY_TAG}-${PLATFORM}"
+            RELEASE_NAME="llvmlite ${PKG_VERSION} (${PY_TAG}, Windows ARM64)"
 
             echo "Creating release:"
             echo "  Tag:  $RELEASE_TAG"
@@ -78,8 +72,7 @@ jobs:
 
             gh release create "$RELEASE_TAG" \
               --title "$RELEASE_NAME" \
-              --notes "llvmlite Windows ARM64 wheel built from commit ${{ github.event.inputs.commit_sha }}" \
-              --target "${{ github.ref_name }}" \
+              --notes "llvmlite Windows ARM64 wheel built from workflow run ${{ github.event.inputs.run_id }}" \
               --prerelease \
               "$WHEEL_FILE" || echo "Release $RELEASE_TAG already exists, skipping"
           done
@@ -90,5 +83,7 @@ jobs:
         run: |
           echo "## llvmlite Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Created GitHub releases for the following wheels:" >> $GITHUB_STEP_SUMMARY
+          echo "Build workflow run ID: **${{ github.event.inputs.run_id }}**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Released wheels:" >> $GITHUB_STEP_SUMMARY
           find artifacts -type f -name "*.whl" | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
