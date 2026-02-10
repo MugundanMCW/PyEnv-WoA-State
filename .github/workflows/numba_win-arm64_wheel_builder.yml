@@ -6,16 +6,10 @@ on:
         description: 'llvmlite workflow run ID (optional - if not provided, will use release)'
         required: false
         type: string
-      upload_wheel_to_anaconda:
-        description: 'Upload wheel to Anaconda Cloud - numba channel'
-        required: false
-        type: boolean
-        default: false
 
 env:
   VALIDATION_PYTHON_VERSION: "3.12"
   ARTIFACT_RETENTION_DAYS: 7
-  WHEELS_INDEX_URL: https://pypi.anaconda.org/numba/label/dev/simple
   LLVMLITE_RELEASE_TAG: llvmlite-0.47.0-win_arm64
   LLVMLITE_REPO: khmyznikov/PyEnv-WoA-State
 
