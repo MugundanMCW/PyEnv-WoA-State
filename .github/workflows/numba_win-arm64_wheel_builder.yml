@@ -11,7 +11,7 @@ env:
   VALIDATION_PYTHON_VERSION: "3.12"
   ARTIFACT_RETENTION_DAYS: 7
   LLVMLITE_RELEASE_TAG: llvmlite-0.47.0-win_arm64
-  LLVMLITE_REPO: khmyznikov/PyEnv-WoA-State
+  LLVMLITE_REPO: MugundanMCW/PyEnv-WoA-State
 
 jobs:
   load-matrix:
