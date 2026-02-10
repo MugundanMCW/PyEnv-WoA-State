@@ -24,8 +24,8 @@ jobs:
       - id: load_matrix_json
         name: Load Workflow Matrix JSON
         run: |
-          BUILD_MATRIX_JSON=$(jq -c .wheel_build_winarm64_matrix .github/workflows/wheel_workflow_matrix.json)
-          TEST_MATRIX_JSON=$(jq -c .wheel_test_winarm64_matrix .github/workflows/wheel_workflow_matrix.json)
+          BUILD_MATRIX_JSON=$(jq -c .wheel_build_winarm64_matrix .github/workflows/numba/wheel_workflow_matrix.json)
+          TEST_MATRIX_JSON=$(jq -c .wheel_test_winarm64_matrix .github/workflows/numba/wheel_workflow_matrix.json)
           
           # Add canonical python versions to both matrices
           BUILD_MATRIX_EXTENDED=$(echo "$BUILD_MATRIX_JSON" | jq -c '
