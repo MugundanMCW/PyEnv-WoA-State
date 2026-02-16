@@ -60,6 +60,7 @@ jobs:
         run: |
           git clone https://github.com/numba/numba.git numba_src
           cd numba_src
+          git checkout 6ce7ca6bea84cf650fbfe26daa85d1ee939919c7
           git apply "%GITHUB_WORKSPACE%\.github\workflows\numba\patches\0001-Add-patches-for-building-Numba-on-Windows-ARM64.patch"
       
       - name: Setup Python
